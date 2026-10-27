@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Memory Trainer</title>
+    <style>
+        :root {
+            --primary: #4c6ef5;
+            --primary-dark: #3b5bdb;
+            --accent: #ffd43b;
+            --bg: #f1f5ff;
+            --card-bg: #ffffff;
+            --text: #2b2d42;
+            --text-light: #6b7280;
+            --border: #dbe4ff;
+            --success: #37b24d;
+            --success-bg: #ebfbee;
+            --retry: #845ef7;
+            --retry-bg: #f3f0ff;
+            --radius: 16px;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+            --touch-min: 64px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        /* Root app container. The View / Renderer region owns everything inside here. */
+        #app {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 1.5rem;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .screen-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--primary-dark);
+        }
+
+        .btn {
+            min-width: var(--touch-min);
+            min-height: var(--touch-min);
+            border-radius: 12px;
+            border: none;
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            background: var(--primary);
+            color: #fff;
+            box-shadow: var(--shadow);
+            transition: transform 0.08s ease, box-shadow 0.08s ease;
+        }
+
+        .btn:active,
+        .btn.is-pressed {
+            transform: scale(0.95);
+            box-shadow: none;
+        }
+
+        .placeholder-note {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        /* ---- Setup screen ---- */
+        .section-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.6rem;
+        }
+
+        .level-btn {
+            background: var(--card-bg);
+            color: var(--primary-dark);
+            border: 3px solid var(--border);
+            font-size: 1.4rem;
+        }
+
+        .level-btn.is-selected {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary-dark);
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .toggle-btn {
+            background: var(--border);
+            color: var(--text);
+            min-width: 88px;
+        }
+
+        .toggle-btn.is-on {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .duration-row {
+            display: flex;
+            gap: 0.6rem;
+        }
+
+        .duration-btn {
+            flex: 1;
+            background: var(--card-bg);
+            color: var(--primary-dark);
+            border: 3px solid var(--border);
+            font-size: 1.1rem;
+        }
+
+        .duration-btn.is-selected {
+            background: var(--accent);
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .start-btn {
+            width: 100%;
+            min-height: 72px;
+            font-size: 1.6rem;
+            background: var(--success);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ---- Keypad ---- */
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 0.6rem;
+        }
+
+        .keypad-btn {
+            font-size: 1.6rem;
+        }
+
+        .keypad-btn.control-btn {
+            font-size: 1rem;
+            background: var(--retry);
+        }
+
+        .keypad-btn.is-locked,
+        .keypad-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* ---- Display screen ---- */
+        .display-cue {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .sequence-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .sequence-digit {
+            min-width: var(--touch-min);
+            min-height: var(--touch-min);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--primary);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 14px;
+            border-radius: 999px;
+            background: var(--border);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 999px;
+            transition: width linear;
+        }
+
+        /* ---- Recall screen ---- */
+        .recall-cue {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .input-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .input-slot {
+            min-width: 48px;
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text);
+            background: var(--card-bg);
+            border: 3px dashed var(--border);
+            border-radius: 12px;
+        }
+
+        .input-slot.is-filled {
+            border-style: solid;
+            border-color: var(--primary);
+            background: var(--bg);
+            color: var(--primary-dark);
+        }
+
+        /* ---- Feedback screen ---- */
+        .feedback-message {
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            border-radius: var(--radius);
+            padding: 1rem;
+        }
+
+        .feedback-message.is-match {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .feedback-message.is-retry {
+            background: var(--retry-bg);
+            color: var(--retry);
+        }
+
+        .feedback-answer-label {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+
+        .next-btn {
+            width: 100%;
+            min-height: 72px;
+            font-size: 1.6rem;
+            background: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .settings-btn {
+            width: 100%;
+            background: var(--card-bg);
+            color: var(--text-light);
+            border: 3px solid var(--border);
+            box-shadow: none;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Root container element for the Trainer. The renderer mounts all screens here. -->
+    <div id="app" role="application" aria-label="Number Memory Trainer">
+        <div class="screen-title">🔢 Number Memory Trainer</div>
+        <p class="placeholder-note">Setting up the trainer&hellip;</p>
+    </div>
+
+    <script>
+        /* ============================================================
+         * Number Memory Trainer
+         * Single-file app. Regions below are kept clearly delimited:
+         *   1. CORE LOGIC    - pure functions, no DOM access
+         *   2. STATE MACHINE - session settings + round + phase transitions
+         *   3. VIEW / RENDERER - DOM rendering and event wiring
+         *   4. BOOTSTRAP     - wires the state machine to the renderer on load
+         * ============================================================ */
+
+        (function () {
+            'use strict';
+
+            // ========================================================
+            // 1. CORE LOGIC
+            // (pure functions; no DOM access; deterministic given inputs)
+            // ========================================================
+            const CoreLogic = {
+                /**
+                 * Generate a Sequence of `length` digits in 0..9 (repeats allowed).
+                 * Precondition: 1 <= length <= 8.
+                 * @param {number} length
+                 * @param {() => number} rand - random source returning a float in [0, 1)
+                 * @returns {number[]}
+                 */
+                generateSequence(length, rand) {
+                    const sequence = [];
+                    for (let i = 0; i < length; i++) {
+                        sequence.push(Math.floor(rand() * 10));
+                    }
+                    return sequence;
+                },
+
+                /**
+                 * Build the standard phone-style Keypad_Layout (ascending digits,
+                 * clr/0/del on the bottom row).
+                 * @returns {{cells: Array<{type: 'digit', value: number} | {type: 'control', action: 'clear'|'backspace'}>}}
+                 */
+                buildStandardLayout() {
+                    // Standard phone-style layout, row-major, 3x4 grid:
+                    //  1  2  3
+                    //  4  5  6
+                    //  7  8  9
+                    // clr 0  del
+                    return {
+                        cells: [
+                            { type: 'digit', value: 1 },
+                            { type: 'digit', value: 2 },
+                            { type: 'digit', value: 3 },
+                            { type: 'digit', value: 4 },
+                            { type: 'digit', value: 5 },
+                            { type: 'digit', value: 6 },
+                            { type: 'digit', value: 7 },
+                            { type: 'digit', value: 8 },
+                            { type: 'digit', value: 9 },
+                            { type: 'control', action: 'clear' },
+                            { type: 'digit', value: 0 },
+                            { type: 'control', action: 'backspace' }
+                        ]
+                    };
+                },
+
+                /**
+                 * Return a shuffled Keypad_Layout: digits 0..9 permuted across the
+                 * digit cells via Fisher-Yates; control cells keep their positions.
+                 * @param {() => number} rand
+                 * @returns {{cells: Array<{type: 'digit', value: number} | {type: 'control', action: 'clear'|'backspace'}>}}
+                 */
+                shuffleLayout(rand) {
+                    const standard = CoreLogic.buildStandardLayout();
+                    const values = standard.cells
+                        .filter(cell => cell.type === 'digit')
+                        .map(cell => cell.value);
+
+                    // Fisher-Yates shuffle of the 10 digit values using the injected rand.
+                    for (let i = values.length - 1; i > 0; i--) {
+                        const j = Math.floor(rand() * (i + 1));
+                        const tmp = values[i];
+                        values[i] = values[j];
+                        values[j] = tmp;
+                    }
+
+                    let digitIndex = 0;
+                    const cells = standard.cells.map(cell => {
+                        if (cell.type === 'digit') {
+                            const value = values[digitIndex];
+                            digitIndex++;
+                            return { type: 'digit', value };
+                        }
+                        return { type: 'control', action: cell.action };
+                    });
+
+                    return { cells };
+                },
+
+                /**
+                 * Compare an Input_Sequence to the target Sequence, in order.
+                 * @param {number[]} input
+                 * @param {number[]} target
+                 * @returns {{isMatch: boolean, perPosition: boolean[]}}
+                 */
+                evaluateAttempt(input, target) {
+                    // Per-index correctness: a position counts as correct only when
+                    // the target has a digit there and the input matches it.
+                    const perPosition = target.map(function (digit, i) {
+                        return i < input.length && input[i] === digit;
+                    });
+                    // Exact match requires equal length and every target position correct.
+                    const isMatch = input.length === target.length &&
+                        perPosition.every(function (correct) { return correct; });
+                    return { isMatch: isMatch, perPosition: perPosition };
+                }
+            };
+
+            // ========================================================
+            // 2. STATE MACHINE
+            // (session settings + active round + phase transitions)
+            // ========================================================
+            const Phase = Object.freeze({
+                SETUP: 'SETUP',
+                DISPLAY: 'DISPLAY',
+                RECALL: 'RECALL',
+                FEEDBACK: 'FEEDBACK'
+            });
+
+            /**
+             * @param {() => number} [rand] - random source injected for determinism in
+             *   tests; defaults to Math.random for production use.
+             */
+            function createTrainer(rand) {
+                const randSource = typeof rand === 'function' ? rand : Math.random;
+
+                return {
+                    settings: {
+                        level: 1,
+                        shuffleMode: false,
+                        displayDurationMs: 3000
+                    },
+                    round: null,
+                    phase: Phase.SETUP,
+
+                    selectLevel(level) {
+                        // Only valid while in SETUP; otherwise a no-op (design error
+                        // handling table + Property 2's "mid-round selectLevel" case).
+                        if (this.phase !== Phase.SETUP) {
+                            return;
+                        }
+                        // Clamp/validate to the integer range 1..8 so an invalid
+                        // Sequence_Length can never be produced.
+                        if (typeof level !== 'number' || !Number.isFinite(level)) {
+                            return;
+                        }
+                        const rounded = Math.round(level);
+                        const clamped = Math.min(8, Math.max(1, rounded));
+                        this.settings.level = clamped;
+                    },
+                    setShuffleMode(enabled) {
+                        // Only valid while in SETUP; otherwise a no-op.
+                        if (this.phase !== Phase.SETUP) {
+                            return;
+                        }
+                        this.settings.shuffleMode = !!enabled;
+                    },
+                    setDisplayDuration(seconds) {
+                        // Falls back to the default 3000 ms on a non-positive or
+                        // non-numeric value, so the timer always gets a valid duration.
+                        if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) {
+                            this.settings.displayDurationMs = 3000;
+                            return;
+                        }
+                        this.settings.displayDurationMs = seconds * 1000;
+                    },
+                    startRound() {
+                        // Valid from SETUP or FEEDBACK only.
+                        if (this.phase !== Phase.SETUP && this.phase !== Phase.FEEDBACK) {
+                            return;
+                        }
+                        // Snapshot settings.level into a fresh round so later Level
+                        // changes cannot affect a Round already in progress.
+                        const sequenceLength = this.settings.level;
+                        const sequence = CoreLogic.generateSequence(sequenceLength, randSource);
+                        const keypadLayout = this.settings.shuffleMode
+                            ? CoreLogic.shuffleLayout(randSource)
+                            : CoreLogic.buildStandardLayout();
+
+                        this.round = {
+                            sequenceLength: sequenceLength,
+                            sequence: sequence,
+                            keypadLayout: keypadLayout,
+                            inputSequence: [],
+                            result: null
+                        };
+                        this.phase = Phase.DISPLAY;
+                    },
+                    onDisplayElapsed() {
+                        // Guarded by a phase check so a stale timer firing after the
+                        // Round has already advanced (e.g. a second timer from a
+                        // prior Round) is a no-op (design error handling table).
+                        if (this.phase !== Phase.DISPLAY) {
+                            return;
+                        }
+                        // Hide the Sequence and unlock the Keypad by moving to
+                        // RECALL; the renderer derives Sequence visibility and
+                        // Keypad lock state from `phase`, so no separate flag is
+                        // needed here.
+                        this.phase = Phase.RECALL;
+                    },
+                    pressDigit(digit) {
+                        // Only valid during RECALL; otherwise a no-op (Property 5).
+                        if (this.phase !== Phase.RECALL) {
+                            return;
+                        }
+                        this.round.inputSequence.push(digit);
+                        // Auto-evaluate the instant the Input_Sequence reaches the
+                        // Round's snapshotted sequence length (Req 4.3, Property 9).
+                        if (this.round.inputSequence.length === this.round.sequenceLength) {
+                            this.round.result = CoreLogic.evaluateAttempt(
+                                this.round.inputSequence,
+                                this.round.sequence
+                            );
+                            this.phase = Phase.FEEDBACK;
+                        }
+                    },
+                    backspace() {
+                        // Only valid during RECALL; otherwise a no-op.
+                        if (this.phase !== Phase.RECALL) {
+                            return;
+                        }
+                        // No-op on an already-empty Input_Sequence.
+                        if (this.round.inputSequence.length === 0) {
+                            return;
+                        }
+                        this.round.inputSequence.pop();
+                    },
+                    clearInput() {
+                        // Only valid during RECALL; otherwise a no-op.
+                        if (this.phase !== Phase.RECALL) {
+                            return;
+                        }
+                        // Idempotent: assigning a fresh empty array is a no-op when
+                        // the Input_Sequence is already empty.
+                        this.round.inputSequence = [];
+                    },
+                    nextRound() {
+                        // Only valid from FEEDBACK.
+                        if (this.phase !== Phase.FEEDBACK) {
+                            return;
+                        }
+                        // Start a fresh Round at the same Level: startRound() already
+                        // does the snapshot + generate + phase-to-DISPLAY work and is
+                        // valid when phase is FEEDBACK.
+                        this.startRound();
+                    },
+                    goToSetup() {
+                        // Only valid from FEEDBACK: this is the one point between
+                        // Rounds where it's safe to let the child/parent change
+                        // Level or settings again, without disrupting a Round in
+                        // progress (mirrors the SETUP|FEEDBACK -> DISPLAY guard
+                        // already used by startRound/nextRound).
+                        if (this.phase !== Phase.FEEDBACK) {
+                            return;
+                        }
+                        this.round = null;
+                        this.phase = Phase.SETUP;
+                    }
+                };
+            }
+
+            // ========================================================
+            // 3. VIEW / RENDERER
+            // (DOM rendering + event wiring; reads state, dispatches events)
+            // ========================================================
+
+            /**
+             * Schedule `fn` for the next animation frame when available
+             * (real browsers), falling back to a zero-delay `setTimeout` in
+             * environments without `requestAnimationFrame` (e.g. jsdom test
+             * harness). Used only to kick off a CSS transition on the next
+             * paint; never relied on for app logic/timing.
+             * @param {() => void} fn
+             */
+            function requestAnimationFrameOrTimeout(fn) {
+                if (typeof requestAnimationFrame === 'function') {
+                    requestAnimationFrame(fn);
+                } else {
+                    setTimeout(fn, 0);
+                }
+            }
+
+            const Renderer = {
+                /**
+                 * Render the current trainer state into the root container.
+                 * Routes to the screen for the trainer's current phase:
+                 * SETUP, DISPLAY, RECALL, and FEEDBACK are all fully
+                 * implemented.
+                 * @param {HTMLElement} root
+                 * @param {ReturnType<typeof createTrainer>} trainer
+                 */
+                render(root, trainer) {
+                    root.innerHTML = '';
+
+                    const title = document.createElement('div');
+                    title.className = 'screen-title';
+                    title.textContent = '🔢 Number Memory Trainer';
+                    root.appendChild(title);
+
+                    if (trainer.phase === Phase.SETUP) {
+                        root.appendChild(Renderer.renderSetupScreen(root, trainer));
+                        return;
+                    }
+
+                    if (trainer.phase === Phase.DISPLAY) {
+                        root.appendChild(Renderer.renderDisplayScreen(root, trainer));
+                        return;
+                    }
+
+                    if (trainer.phase === Phase.RECALL) {
+                        root.appendChild(Renderer.renderRecallScreen(root, trainer));
+                        return;
+                    }
+
+                    if (trainer.phase === Phase.FEEDBACK) {
+                        root.appendChild(Renderer.renderFeedbackScreen(root, trainer));
+                        return;
+                    }
+
+                    // Defensive fallback for any unexpected phase value; the
+                    // state machine only ever sets one of the four known
+                    // phases, so this path should not be reachable.
+                    const note = document.createElement('p');
+                    note.className = 'placeholder-note';
+                    note.textContent = 'Screen for phase "' + trainer.phase + '" coming soon\u2026';
+                    root.appendChild(note);
+                },
+
+                /**
+                 * Tracks the Round object for which the Display_Duration
+                 * timer has already been scheduled, so that re-rendering
+                 * while still in the DISPLAY phase (for any reason) never
+                 * stacks a second `setTimeout` for the same Round. A new
+                 * Round object (from `startRound`/`nextRound`) is a fresh
+                 * reference, so it will be scheduled exactly once in turn.
+                 * @type {object | null}
+                 */
+                _displayTimerRound: null,
+
+                /**
+                 * Render the DISPLAY screen: the flashed Sequence with a
+                 * "watch and remember" visual cue plus a progress bar, and
+                 * no Keypad (Req 7.5 - one primary focus). The View owns the
+                 * single Display_Duration `setTimeout` here: it is
+                 * scheduled at most once per Round by tracking the Round
+                 * reference already scheduled in `_displayTimerRound`.
+                 * @param {HTMLElement} root
+                 * @param {ReturnType<typeof createTrainer>} trainer
+                 * @returns {HTMLElement}
+                 */
+                renderDisplayScreen(root, trainer) {
+                    const round = trainer.round;
+
+                    // Schedule the Display_Duration timer exactly once per
+                    // Round. Comparing against the tracked Round reference
+                    // (rather than a flag on the round itself) avoids
+                    // double-scheduling if render() is called again while
+                    // still in DISPLAY for this same Round.
+                    if (round && Renderer._displayTimerRound !== round) {
+                        Renderer._displayTimerRound = round;
+                        setTimeout(function () {
+                            trainer.onDisplayElapsed();
+                            Renderer.render(root, trainer);
+                        }, trainer.settings.displayDurationMs);
+                    }
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'display-screen';
+                    wrapper.style.display = 'flex';
+                    wrapper.style.flexDirection = 'column';
+                    wrapper.style.gap = '1rem';
+                    wrapper.style.flex = '1';
+
+                    // --- Visual cue that this is the watch-and-remember phase ---
+                    const cue = document.createElement('div');
+                    cue.className = 'display-cue';
+                    cue.innerHTML = '<span aria-hidden="true">\ud83d\udc40</span> Remember!';
+                    wrapper.appendChild(cue);
+
+                    // --- The flashed Sequence, large and high-contrast (Req 3.1, 7.2) ---
+                    const sequenceRow = document.createElement('div');
+                    sequenceRow.className = 'sequence-row';
+                    sequenceRow.setAttribute('role', 'group');
+                    sequenceRow.setAttribute('aria-label', 'Sequence to remember');
+                    const sequence = (round && round.sequence) || [];
+                    sequence.forEach(function (digit) {
+                        const digitEl = document.createElement('div');
+                        digitEl.className = 'sequence-digit';
+                        digitEl.textContent = String(digit);
+                        sequenceRow.appendChild(digitEl);
+                    });
+                    wrapper.appendChild(sequenceRow);
+
+                    // --- Simple progress bar counting down the Display_Duration ---
+                    const track = document.createElement('div');
+                    track.className = 'progress-track';
+                    const fill = document.createElement('div');
+                    fill.className = 'progress-fill';
+                    fill.style.width = '100%';
+                    track.appendChild(fill);
+                    wrapper.appendChild(track);
+                    // Kick the width transition to 0 on the next frame so the
+                    // bar visibly drains over the Display_Duration.
+                    const durationMs = trainer.settings.displayDurationMs;
+                    requestAnimationFrameOrTimeout(function () {
+                        fill.style.transitionDuration = durationMs + 'ms';
+                        fill.style.width = '0%';
+                    });
+
+                    return wrapper;
+                },
+
+                /**
+                 * Render the RECALL screen: Input_Sequence placeholders
+                 * (exactly `round.sequenceLength` slots, filled left-to-right
+                 * as digits are entered) plus the Keypad below them. The
+                 * Sequence itself is never rendered on this screen (Req 3.6).
+                 * @param {HTMLElement} root
+                 * @param {ReturnType<typeof createTrainer>} trainer
+                 * @returns {HTMLElement}
+                 */
+                renderRecallScreen(root, trainer) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'recall-screen';
+                    wrapper.style.display = 'flex';
+                    wrapper.style.flexDirection = 'column';
+                    wrapper.style.gap = '1rem';
+
+                    // --- Short cue for the recall step (Req 7.3) ---
+                    const cue = document.createElement('div');
+                    cue.className = 'recall-cue';
+                    cue.innerHTML = '<span aria-hidden="true">\u2328\ufe0f</span> Your Turn!';
+                    wrapper.appendChild(cue);
+
+                    // --- Input_Sequence placeholders (Req 4.6) ---
+                    const round = trainer.round;
+                    const sequenceLength = (round && round.sequenceLength) || 0;
+                    const inputSequence = (round && round.inputSequence) || [];
+
+                    const inputRow = document.createElement('div');
+                    inputRow.className = 'input-row';
+                    inputRow.setAttribute('role', 'group');
+                    inputRow.setAttribute('aria-label', 'Your answer');
+                    for (let i = 0; i < sequenceLength; i++) {
+                        const slot = document.createElement('div');
+                        const filled = i < inputSequence.length;
+                        slot.className = 'input-slot' + (filled ? ' is-filled' : '');
+                        slot.textContent = filled ? String(inputSequence[i]) : '';
+                        slot.setAttribute('aria-label', filled
+                            ? 'Digit ' + (i + 1) + ': ' + inputSequence[i]
+                            : 'Digit ' + (i + 1) + ': empty');
+                        inputRow.appendChild(slot);
+                    }
+                    wrapper.appendChild(inputRow);
+
+                    // --- Keypad for digit entry (Req 4.1, 4.2, 4.4, 4.5) ---
+                    wrapper.appendChild(Renderer.renderKeypad(root, trainer));
+
+                    return wrapper;
+                },
+
+                /**
+                 * Render the FEEDBACK screen: a positive confirmation on a
+                 * match (Req 6.2), or a warm, non-punitive retry message on
+                 * a miss that reveals the correct Sequence (Req 6.3, 6.4),
+                 * plus a Next control that starts a fresh Round at the same
+                 * Level (Req 6.5). Uses the same friendly palette as the
+                 * rest of the app - the calmer --retry/--retry-bg pair on a
+                 * miss rather than any red/alarm styling (Req 7.6).
+                 * @param {HTMLElement} root
+                 * @param {ReturnType<typeof createTrainer>} trainer
+                 * @returns {HTMLElement}
+                 */
+                renderFeedbackScreen(root, trainer) {
+                    const round = trainer.round;
+                    const result = round && round.result;
+                    const isMatch = !!(result && result.isMatch);
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'feedback-screen';
+                    wrapper.style.display = 'flex';
+                    wrapper.style.flexDirection = 'column';
+                    wrapper.style.gap = '1rem';
+                    wrapper.style.flex = '1';
+
+                    // --- Short, friendly message (Req 6.2, 6.3, 7.3) ---
+                    const message = document.createElement('div');
+                    message.setAttribute('role', 'status');
+                    if (isMatch) {
+                        message.className = 'feedback-message is-match';
+                        message.innerHTML = '<span aria-hidden="true">\ud83c\udf89</span> You got it!';
+                    } else {
+                        message.className = 'feedback-message is-retry';
+                        message.innerHTML = '<span aria-hidden="true">\ud83d\udc9c</span> Nice try! Let\u2019s see it together';
+                    }
+                    wrapper.appendChild(message);
+
+                    // --- On a miss, reveal the correct Sequence (Req 6.4) ---
+                    if (!isMatch) {
+                        const answerLabel = document.createElement('div');
+                        answerLabel.className = 'feedback-answer-label';
+                        answerLabel.textContent = 'The numbers were:';
+                        wrapper.appendChild(answerLabel);
+
+                        const sequenceRow = document.createElement('div');
+                        sequenceRow.className = 'sequence-row';
+                        sequenceRow.setAttribute('role', 'group');
+                        sequenceRow.setAttribute('aria-label', 'Correct sequence');
+                        const sequence = (round && round.sequence) || [];
+                        sequence.forEach(function (digit) {
+                            const digitEl = document.createElement('div');
+                            digitEl.className = 'sequence-digit';
+                            digitEl.textContent = String(digit);
+                            sequenceRow.appendChild(digitEl);
+                        });
+                        wrapper.appendChild(sequenceRow);
+                    }
+
+                    // --- Next control: starts a fresh Round at the same Level (Req 6.5) ---
+                    const nextBtn = document.createElement('button');
+                    nextBtn.type = 'button';
+                    nextBtn.className = 'btn next-btn';
+                    nextBtn.innerHTML = '<span aria-hidden="true">\u27a1\ufe0f</span> Next';
+                    nextBtn.addEventListener('click', function () {
+                        trainer.nextRound();
+                        Renderer.render(root, trainer);
+                    });
+                    wrapper.appendChild(nextBtn);
+
+                    // --- Settings control: the one escape hatch back to SETUP,
+                    // offered between Rounds so changing Level/options never
+                    // disrupts a Round in progress. ---
+                    const settingsBtn = document.createElement('button');
+                    settingsBtn.type = 'button';
+                    settingsBtn.className = 'btn settings-btn';
+                    settingsBtn.innerHTML = '<span aria-hidden="true">\u2699\ufe0f</span> Settings';
+                    settingsBtn.addEventListener('click', function () {
+                        trainer.goToSetup();
+                        Renderer.render(root, trainer);
+                    });
+                    wrapper.appendChild(settingsBtn);
+
+                    return wrapper;
+                },
+
+                /**
+                 * Build the SETUP screen: Level_Selector, Shuffle_Mode toggle,
+                 * Display_Duration presets, and the Start button. Every
+                 * control dispatches straight to the state machine and then
+                 * triggers a full re-render, since the trainer mutates its
+                 * state in place rather than emitting change events.
+                 * @param {HTMLElement} root
+                 * @param {ReturnType<typeof createTrainer>} trainer
+                 * @returns {HTMLElement}
+                 */
+                renderSetupScreen(root, trainer) {
+                    const rerender = function () {
+                        Renderer.render(root, trainer);
+                    };
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'setup-screen';
+                    wrapper.style.display = 'flex';
+                    wrapper.style.flexDirection = 'column';
+                    wrapper.style.gap = '1rem';
+
+                    // --- Level_Selector: 8 large selectable Levels (Req 1.2, 7.1, 7.2) ---
+                    const levelLabel = document.createElement('div');
+                    levelLabel.className = 'section-label';
+                    levelLabel.innerHTML = '<span aria-hidden="true">🎯</span> Level';
+                    wrapper.appendChild(levelLabel);
+
+                    const levelGrid = document.createElement('div');
+                    levelGrid.className = 'level-grid';
+                    levelGrid.setAttribute('role', 'group');
+                    levelGrid.setAttribute('aria-label', 'Level');
+                    for (let level = 1; level <= 8; level++) {
+                        const levelBtn = document.createElement('button');
+                        levelBtn.type = 'button';
+                        levelBtn.className = 'btn level-btn';
+                        if (trainer.settings.level === level) {
+                            levelBtn.classList.add('is-selected');
+                        }
+                        levelBtn.textContent = String(level);
+                        levelBtn.setAttribute('aria-pressed', String(trainer.settings.level === level));
+                        levelBtn.setAttribute('aria-label', 'Level ' + level);
+                        levelBtn.addEventListener('click', function () {
+                            trainer.selectLevel(level);
+                            rerender();
+                        });
+                        levelGrid.appendChild(levelBtn);
+                    }
+                    wrapper.appendChild(levelGrid);
+
+                    // --- Shuffle_Mode toggle (Req 5.3, 7.1, 7.3) ---
+                    const shuffleLabel = document.createElement('div');
+                    shuffleLabel.className = 'section-label';
+                    shuffleLabel.innerHTML = '<span aria-hidden="true">🔀</span> Mix Up Keys';
+                    wrapper.appendChild(shuffleLabel);
+
+                    const shuffleRow = document.createElement('div');
+                    shuffleRow.className = 'toggle-row';
+
+                    const shuffleBtn = document.createElement('button');
+                    shuffleBtn.type = 'button';
+                    const shuffleOn = !!trainer.settings.shuffleMode;
+                    shuffleBtn.className = 'btn toggle-btn' + (shuffleOn ? ' is-on' : '');
+                    shuffleBtn.setAttribute('role', 'switch');
+                    shuffleBtn.setAttribute('aria-checked', String(shuffleOn));
+                    shuffleBtn.setAttribute('aria-label', 'Mix Up Keys');
+                    shuffleBtn.innerHTML = shuffleOn
+                        ? '<span aria-hidden="true">✅</span> On'
+                        : '<span aria-hidden="true">⬜</span> Off';
+                    shuffleBtn.addEventListener('click', function () {
+                        trainer.setShuffleMode(!trainer.settings.shuffleMode);
+                        rerender();
+                    });
+                    shuffleRow.appendChild(shuffleBtn);
+                    wrapper.appendChild(shuffleRow);
+
+                    // --- Display_Duration presets (Req 7.1, 7.3) ---
+                    const durationLabel = document.createElement('div');
+                    durationLabel.className = 'section-label';
+                    durationLabel.innerHTML = '<span aria-hidden="true">⏱️</span> Show Time';
+                    wrapper.appendChild(durationLabel);
+
+                    const durationRow = document.createElement('div');
+                    durationRow.className = 'duration-row';
+                    durationRow.setAttribute('role', 'group');
+                    durationRow.setAttribute('aria-label', 'Show Time');
+
+                    const presets = [
+                        { seconds: 2, icon: '🐇', label: 'Fast' },
+                        { seconds: 3, icon: '🙂', label: 'Normal' },
+                        { seconds: 5, icon: '🐢', label: 'Slow' }
+                    ];
+                    const currentSeconds = trainer.settings.displayDurationMs / 1000;
+                    presets.forEach(function (preset) {
+                        const presetBtn = document.createElement('button');
+                        presetBtn.type = 'button';
+                        presetBtn.className = 'btn duration-btn';
+                        if (currentSeconds === preset.seconds) {
+                            presetBtn.classList.add('is-selected');
+                        }
+                        presetBtn.innerHTML = '<span aria-hidden="true">' + preset.icon + '</span><br>' + preset.label;
+                        presetBtn.setAttribute('aria-pressed', String(currentSeconds === preset.seconds));
+                        presetBtn.addEventListener('click', function () {
+                            trainer.setDisplayDuration(preset.seconds);
+                            rerender();
+                        });
+                        durationRow.appendChild(presetBtn);
+                    });
+                    wrapper.appendChild(durationRow);
+
+                    // --- Start button: the one primary action on this screen (Req 7.5) ---
+                    const startBtn = document.createElement('button');
+                    startBtn.type = 'button';
+                    startBtn.className = 'btn start-btn';
+                    startBtn.innerHTML = '<span aria-hidden="true">▶️</span> Start';
+                    startBtn.addEventListener('click', function () {
+                        trainer.startRound();
+                        rerender();
+                    });
+                    wrapper.appendChild(startBtn);
+
+                    return wrapper;
+                },
+
+                /**
+                 * Build the Keypad: a 3x4 grid of buttons rendered from
+                 * `trainer.round.keypadLayout.cells` (row-major, 12 cells).
+                 * This is a reusable building block - the RECALL screen
+                 * calls this same function rather than duplicating the grid
+                 * markup. DISPLAY intentionally omits the Keypad entirely
+                 * (Req 7.5 - one primary focus per screen).
+                 *
+                 * Each cell is rendered positionally: a shuffled layout's
+                 * digit values move around the grid, but control cells
+                 * (clear/backspace) always keep their standard positions
+                 * (index 9 and 11). A press dispatches the digit/action
+                 * belonging to that cell, not the cell's position, so a
+                 * shuffled Keypad still reports the correct underlying value.
+                 *
+                 * The Keypad is locked (buttons disabled + dimmed) whenever
+                 * `trainer.phase !== Phase.RECALL`, satisfying the input-lock
+                 * requirement regardless of which screen renders it.
+                 * @param {HTMLElement} root
+                 * @param {ReturnType<typeof createTrainer>} trainer
+                 * @returns {HTMLElement}
+                 */
+                renderKeypad(root, trainer) {
+                    const rerender = function () {
+                        Renderer.render(root, trainer);
+                    };
+
+                    const locked = trainer.phase !== Phase.RECALL;
+
+                    const grid = document.createElement('div');
+                    grid.className = 'keypad-grid';
+                    grid.setAttribute('role', 'group');
+                    grid.setAttribute('aria-label', 'Keypad');
+
+                    const cells = (trainer.round && trainer.round.keypadLayout
+                        && trainer.round.keypadLayout.cells) || [];
+
+                    cells.forEach(function (cell) {
+                        const key = document.createElement('button');
+                        key.type = 'button';
+                        key.className = 'btn keypad-btn';
+
+                        if (cell.type === 'digit') {
+                            key.textContent = String(cell.value);
+                            key.setAttribute('aria-label', 'Digit ' + cell.value);
+                            key.addEventListener('click', function () {
+                                if (trainer.phase !== Phase.RECALL) {
+                                    return;
+                                }
+                                trainer.pressDigit(cell.value);
+                                rerender();
+                            });
+                        } else if (cell.action === 'clear') {
+                            key.className += ' control-btn';
+                            key.innerHTML = '<span aria-hidden="true">\ud83e\uddf9</span> Clear';
+                            key.setAttribute('aria-label', 'Clear');
+                            key.addEventListener('click', function () {
+                                if (trainer.phase !== Phase.RECALL) {
+                                    return;
+                                }
+                                trainer.clearInput();
+                                rerender();
+                            });
+                        } else {
+                            // backspace
+                            key.className += ' control-btn';
+                            key.innerHTML = '<span aria-hidden="true">\u232b</span> Back';
+                            key.setAttribute('aria-label', 'Backspace');
+                            key.addEventListener('click', function () {
+                                if (trainer.phase !== Phase.RECALL) {
+                                    return;
+                                }
+                                trainer.backspace();
+                                rerender();
+                            });
+                        }
+
+                        if (locked) {
+                            key.classList.add('is-locked');
+                            key.disabled = true;
+                            key.setAttribute('aria-disabled', 'true');
+                        }
+
+                        grid.appendChild(key);
+                    });
+
+                    return grid;
+                }
+            };
+
+            // ========================================================
+            // 4. BOOTSTRAP
+            // ========================================================
+            function bootstrap() {
+                const root = document.getElementById('app');
+                const trainer = createTrainer();
+                Renderer.render(root, trainer);
+            }
+
+            // Expose internals for the in-page/test harness without polluting
+            // the global namespace under normal page load.
+            if (typeof window !== 'undefined') {
+                window.NumberMemoryTrainer = {
+                    CoreLogic,
+                    Phase,
+                    createTrainer,
+                    Renderer
+                };
+            }
+            // Also support CommonJS/ESM-style require for the Vitest test harness.
+            if (typeof module !== 'undefined' && module.exports) {
+                module.exports = {
+                    CoreLogic,
+                    Phase,
+                    createTrainer,
+                    Renderer
+                };
+            }
+
+            if (typeof document !== 'undefined') {
+                document.addEventListener('DOMContentLoaded', bootstrap);
+            }
+        })();
+    </script>
+</body>
+</html>
